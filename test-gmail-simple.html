@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Gmail Simple</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .status { padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .success { background: #e8f5e8; color: #137333; }
+        .error { background: #fce8e6; color: #d93025; }
+        .info { background: #e8f0fe; color: #1a73e8; }
+        .button { background: #1a73e8; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Gmail Simple Page</h1>
+    
+    <div id="status">
+        <div class="status info">Testing Gmail Simple functionality...</div>
+    </div>
+    
+    <button class="button" onclick="testOAuthStatus()">Test OAuth Status</button>
+    <button class="button" onclick="testGmailList()">Test Gmail List</button>
+    <button class="button" onclick="testGmailGet()">Test Gmail Get</button>
+    <button class="button" onclick="testGmailSend()">Test Gmail Send</button>
+    
+    <div id="results">
+        <p>Test results will appear here...</p>
+    </div>
+
+    <script>
+        async function testOAuthStatus() {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            
+            statusDiv.innerHTML = '<div class="status info">Testing OAuth status...</div>';
+            
+            try {
+                const response = await fetch('http://localhost:3002/api/oauth/status');
+                const result = await response.json();
+                
+                statusDiv.innerHTML = `
+                    <div class="status success">
+                        ✅ OAuth status check successful!
+                    </div>
+                `;
+                
+                resultsDiv.innerHTML = `
+                    <h3>OAuth Status:</h3>
+                    <p><strong>Success:</strong> ${result.success ? '✅ Yes' : '❌ No'}</p>
+                    <p><strong>Has Tokens:</strong> ${result.hasTokens ? '✅ Yes' : '❌ No'}</p>
+                    <p><strong>Has Credentials:</strong> ${result.hasCredentials ? '✅ Yes' : '❌ No'}</p>
+                    <p><strong>Tokens Expired:</strong> ${result.tokensExpired ? '❌ Yes' : '✅ No'}</p>
+                `;
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="status error">
+                        ❌ OAuth status check failed: ${error.message}
+                    </div>
+                `;
+                resultsDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+
+        async function testGmailList() {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            
+            statusDiv.innerHTML = '<div class="status info">Testing Gmail list...</div>';
+            
+            try {
+                const response = await fetch('http://localhost:3002/api/gmail/list', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        options: {
+                            maxResults: 2
+                        }
+                    })
+                });
+                const result = await response.json();
+                
+                statusDiv.innerHTML = `
+                    <div class="status success">
+                        ✅ Gmail list test successful!
+                    </div>
+                `;
+                
+                resultsDiv.innerHTML = `
+                    <h3>Gmail List Test:</h3>
+                    <p><strong>Success:</strong> ${result.success ? '✅ Yes' : '❌ No'}</p>
+                    <p><strong>Emails Found:</strong> ${result.emails?.length || 0}</p>
+                    ${result.emails ? `<p><strong>First Email:</strong> ${result.emails[0]?.subject || 'No subject'}</p>` : ''}
+                `;
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="status error">
+                        ❌ Gmail list test failed: ${error.message}
+                    </div>
+                `;
+                resultsDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+
+        async function testGmailGet() {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            
+            statusDiv.innerHTML = '<div class="status info">Testing Gmail get...</div>';
+            
+            try {
+                // First get a list to get an email ID
+                const listResponse = await fetch('http://localhost:3002/api/gmail/list', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        options: {
+                            maxResults: 1
+                        }
+                    })
+                });
+                const listResult = await listResponse.json();
+                
+                if (!listResult.success || !listResult.emails || listResult.emails.length === 0) {
+                    throw new Error('No emails available to test get');
+                }
+                
+                const emailId = listResult.emails[0].id;
+                
+                const response = await fetch('http://localhost:3002/api/gmail/get', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        emailId: emailId
+                    })
+                });
+                const result = await response.json();
+                
+                statusDiv.innerHTML = `
+                    <div class="status success">
+                        ✅ Gmail get test successful!
+                    </div>
+                `;
+                
+                resultsDiv.innerHTML = `
+                    <h3>Gmail Get Test:</h3>
+                    <p><strong>Success:</strong> ${result.success ? '✅ Yes' : '❌ No'}</p>
+                    <p><strong>Email ID:</strong> ${emailId}</p>
+                    <p><strong>Subject:</strong> ${result.email?.subject || 'No subject'}</p>
+                    <p><strong>From:</strong> ${result.email?.from || 'Unknown'}</p>
+                `;
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="status error">
+                        ❌ Gmail get test failed: ${error.message}
+                    </div>
+                `;
+                resultsDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+
+        async function testGmailSend() {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            
+            statusDiv.innerHTML = '<div class="status info">Testing Gmail send...</div>';
+            
+            try {
+                const response = await fetch('http://localhost:3002/api/gmail/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        emailData: {
+                            to: 'grant.tldr@gmail.com',
+                            subject: 'Test from Simple Page',
+                            body: 'This is a test email from the simple test page.'
+                        }
+                    })
+                });
+                const result = await response.json();
+                
+                statusDiv.innerHTML = `
+                    <div class="status success">
+                        ✅ Gmail send test successful!
+                    </div>
+                `;
+                
+                resultsDiv.innerHTML = `
+                    <h3>Gmail Send Test:</h3>
+                    <p><strong>Success:</strong> ${result.success ? '✅ Yes' : '❌ No'}</p>
+                    <p><strong>Message ID:</strong> ${result.messageId || 'None'}</p>
+                `;
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="status error">
+                        ❌ Gmail send test failed: ${error.message}
+                    </div>
+                `;
+                resultsDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+
+        // Auto-test on page load
+        window.onload = function() {
+            testOAuthStatus();
+        };
+    </script>
+</body>
+</html> 

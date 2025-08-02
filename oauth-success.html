@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gmail OAuth - TLDR Integration</title>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@300;400;500;600&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --gcp-blue: #1a73e8;
+            --gcp-blue-hover: #1557b0;
+            --gcp-green: #137333;
+            --gcp-green-light: #e8f5e8;
+            --gcp-red: #d93025;
+            --gcp-yellow: #f9ab00;
+            --gcp-grey-50: #f8f9fa;
+            --gcp-grey-100: #f1f3f4;
+            --gcp-grey-200: #e8eaed;
+            --gcp-grey-300: #dadce0;
+            --gcp-grey-400: #bdc1c6;
+            --gcp-grey-500: #9aa0a6;
+            --gcp-grey-600: #80868b;
+            --gcp-grey-700: #5f6368;
+            --gcp-grey-800: #3c4043;
+            --gcp-grey-900: #202124;
+            --gcp-white: #ffffff;
+        }
+
+        body {
+            font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
+            background-color: var(--gcp-grey-50);
+            color: var(--gcp-grey-900);
+            line-height: 1.5;
+            min-height: 100vh;
+            font-size: 14px;
+        }
+
+        /* Header Bar - exactly like GCP */
+        .gcp-header {
+            background: var(--gcp-white);
+            border-bottom: 1px solid var(--gcp-grey-200);
+            height: 64px;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .gcp-logo {
+            display: flex;
+            align-items: center;
+            font-size: 22px;
+            font-weight: 400;
+            color: var(--gcp-grey-700);
+            margin-right: 32px;
+        }
+
+        .gcp-logo::before {
+            content: "";
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #4285f4, #34a853, #fbbc04, #ea4335);
+            border-radius: 4px;
+            margin-right: 8px;
+        }
+
+        .gcp-breadcrumb {
+            font-size: 14px;
+            color: var(--gcp-grey-600);
+            font-weight: 400;
+        }
+
+        .gcp-breadcrumb a {
+            color: var(--gcp-blue);
+            text-decoration: none;
+        }
+
+        .gcp-breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        /* Main Content Area */
+        .gcp-content {
+            margin-top: 64px;
+            min-height: calc(100vh - 64px);
+            background: var(--gcp-grey-50);
+        }
+
+        .gcp-main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* Page Header */
+        .gcp-page-header {
+            background: var(--gcp-white);
+            border: 1px solid var(--gcp-grey-200);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+        }
+
+        .gcp-page-title {
+            font-size: 28px;
+            font-weight: 400;
+            color: var(--gcp-grey-900);
+            margin-bottom: 8px;
+            font-family: 'Google Sans', sans-serif;
+        }
+
+        .gcp-page-subtitle {
+            font-size: 14px;
+            color: var(--gcp-grey-700);
+            font-weight: 400;
+        }
+
+        /* Cards - GCP Style */
+        .gcp-card {
+            background: var(--gcp-white);
+            border: 1px solid var(--gcp-grey-200);
+            border-radius: 8px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+            overflow: hidden;
+        }
+
+        .gcp-card-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--gcp-grey-200);
+            background: var(--gcp-white);
+        }
+
+        .gcp-card-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--gcp-grey-900);
+            margin: 0;
+            font-family: 'Google Sans', sans-serif;
+        }
+
+        .gcp-card-content {
+            padding: 24px;
+        }
+
+        /* Status Badge */
+        .gcp-status-badge {
+            display: inline-flex;
+            align-items: center;
+            background: var(--gcp-green-light);
+            color: var(--gcp-green);
+            border: 1px solid #c8e6c9;
+            border-radius: 16px;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+
+        .gcp-status-badge::before {
+            content: "✓";
+            margin-right: 6px;
+            font-weight: bold;
+        }
+
+        /* Property List */
+        .gcp-property-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .gcp-property-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--gcp-grey-100);
+        }
+
+        .gcp-property-item:last-child {
+            border-bottom: none;
+        }
+
+        .gcp-property-label {
+            font-size: 14px;
+            color: var(--gcp-grey-700);
+            font-weight: 400;
+            min-width: 120px;
+        }
+
+        .gcp-property-value {
+            font-size: 14px;
+            color: var(--gcp-grey-900);
+            font-weight: 400;
+            text-align: right;
+            word-break: break-all;
+            flex: 1;
+            margin-left: 16px;
+        }
+
+        .gcp-property-value.monospace {
+            font-family: 'Roboto Mono', 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        /* Code Block */
+        .gcp-code-block {
+            background: var(--gcp-grey-50);
+            border: 1px solid var(--gcp-grey-200);
+            border-radius: 4px;
+            padding: 16px;
+            position: relative;
+            margin: 16px 0;
+        }
+
+        .gcp-code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .gcp-code-label {
+            font-size: 12px;
+            color: var(--gcp-grey-700);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .gcp-code-content {
+            font-family: 'Roboto Mono', 'Courier New', monospace;
+            font-size: 13px;
+            color: var(--gcp-grey-900);
+            background: var(--gcp-white);
+            border: 1px solid var(--gcp-grey-300);
+            border-radius: 4px;
+            padding: 12px;
+            word-break: break-all;
+            line-height: 1.4;
+            white-space: pre-wrap;
+        }
+
+        /* Buttons - GCP Style */
+        .gcp-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Google Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 20px;
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            min-height: 36px;
+            box-sizing: border-box;
+        }
+
+        .gcp-button-primary {
+            background: var(--gcp-blue);
+            color: var(--gcp-white);
+            border-color: var(--gcp-blue);
+        }
+
+        .gcp-button-primary:hover {
+            background: var(--gcp-blue-hover);
+            border-color: var(--gcp-blue-hover);
+            box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+        }
+
+        .gcp-button-secondary {
+            background: var(--gcp-white);
+            color: var(--gcp-blue);
+            border-color: var(--gcp-grey-300);
+        }
+
+        .gcp-button-secondary:hover {
+            background: var(--gcp-grey-50);
+            border-color: var(--gcp-grey-400);
+        }
+
+        .gcp-button-copy {
+            background: var(--gcp-white);
+            color: var(--gcp-grey-700);
+            border-color: var(--gcp-grey-300);
+            font-size: 12px;
+            padding: 4px 8px;
+            min-height: 28px;
+        }
+
+        .gcp-button-copy:hover {
+            background: var(--gcp-grey-50);
+            color: var(--gcp-grey-900);
+        }
+
+        .gcp-button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        /* Info Panel */
+        .gcp-info-panel {
+            background: #e8f0fe;
+            border: 1px solid #aecbfa;
+            border-radius: 4px;
+            padding: 16px;
+            margin-top: 24px;
+        }
+
+        .gcp-info-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .gcp-info-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            background: var(--gcp-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .gcp-info-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gcp-blue);
+        }
+
+        .gcp-info-step {
+            font-size: 14px;
+            color: var(--gcp-grey-800);
+            margin-bottom: 8px;
+            padding-left: 28px;
+            position: relative;
+        }
+
+        .gcp-info-step::before {
+            content: counter(step-counter);
+            counter-increment: step-counter;
+            position: absolute;
+            left: 0;
+            background: var(--gcp-blue);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .gcp-info-steps {
+            counter-reset: step-counter;
+        }
+
+        /* Loading States */
+        .gcp-loading {
+            color: var(--gcp-grey-500);
+            font-style: italic;
+        }
+
+        /* Success States */
+        .gcp-success {
+            color: var(--gcp-green);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .gcp-main {
+                padding: 16px;
+            }
+            
+            .gcp-page-header,
+            .gcp-card-content {
+                padding: 16px;
+            }
+            
+            .gcp-button-group {
+                flex-direction: column;
+            }
+            
+            .gcp-property-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+            
+            .gcp-property-value {
+                text-align: left;
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Google Cloud Platform Header -->
+    <div class="gcp-header">
+        <div class="gcp-logo">
+            Google Cloud Platform
+        </div>
+        <div class="gcp-breadcrumb">
+            <a href="demo.html">TLDR App</a> > <a href="#">Integrations</a> > Gmail OAuth
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="gcp-content">
+        <div class="gcp-main">
+            <!-- Page Header -->
+            <div class="gcp-page-header">
+                <h1 class="gcp-page-title">Gmail OAuth Authorization</h1>
+                <p class="gcp-page-subtitle">Your TLDR application has been successfully authorized to access Gmail</p>
+            </div>
+
+            <!-- Authorization Status Card -->
+            <div class="gcp-card">
+                <div class="gcp-card-header">
+                    <h2 class="gcp-card-title">Authorization Status</h2>
+                </div>
+                <div class="gcp-card-content">
+                    <div class="gcp-status-badge">Authorization successful</div>
+                    <p style="color: var(--gcp-grey-700); margin-bottom: 24px;">
+                        Google has successfully authorized TLDR to access your Gmail account with the requested permissions.
+                    </p>
+                    
+                    <ul class="gcp-property-list">
+                        <li class="gcp-property-item">
+                            <span class="gcp-property-label">Status</span>
+                            <span class="gcp-property-value gcp-success">✓ Active</span>
+                        </li>
+                        <li class="gcp-property-item">
+                            <span class="gcp-property-label">Application</span>
+                            <span class="gcp-property-value">TLDR Personal Context Agent</span>
+                        </li>
+                        <li class="gcp-property-item">
+                            <span class="gcp-property-label">State parameter</span>
+                            <span class="gcp-property-value monospace" id="stateValue">Loading...</span>
+                        </li>
+                        <li class="gcp-property-item">
+                            <span class="gcp-property-label">Granted scopes</span>
+                            <span class="gcp-property-value" id="scopeCount">Loading...</span>
+                        </li>
+                        <li class="gcp-property-item">
+                            <span class="gcp-property-label">Permissions</span>
+                            <span class="gcp-property-value">Read emails, Send emails, Modify emails</span>
+                        </li>
+                        <li class="gcp-property-item">
+                            <span class="gcp-property-label">Authorization time</span>
+                            <span class="gcp-property-value" id="authTime">Just now</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Authorization Code Card -->
+            <div class="gcp-card">
+                <div class="gcp-card-header">
+                    <h2 class="gcp-card-title">Authorization Code</h2>
+                </div>
+                <div class="gcp-card-content">
+                    <p style="color: var(--gcp-grey-700); margin-bottom: 16px;">
+                        Use this authorization code to complete the OAuth flow in your TLDR application.
+                    </p>
+                    
+                    <div class="gcp-code-block">
+                        <div class="gcp-code-header">
+                            <span class="gcp-code-label">Authorization Code</span>
+                            <button class="gcp-button gcp-button-copy" onclick="copyAuthCode()">Copy</button>
+                        </div>
+                        <div class="gcp-code-content" id="authCodeDisplay">Loading authorization code...</div>
+                    </div>
+
+                    <div class="gcp-button-group">
+                        <button class="gcp-button gcp-button-primary" onclick="completeIntegration()">
+                            Complete Integration
+                        </button>
+                        <a href="demo.html" class="gcp-button gcp-button-secondary">
+                            Return to TLDR App
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Next Steps Panel -->
+            <div class="gcp-info-panel">
+                <div class="gcp-info-header">
+                    <div class="gcp-info-icon">i</div>
+                    <span class="gcp-info-title">Next steps</span>
+                </div>
+                <div class="gcp-info-steps">
+                    <div class="gcp-info-step">Copy the authorization code from above</div>
+                    <div class="gcp-info-step">Return to the TLDR application OAuth setup wizard</div>
+                    <div class="gcp-info-step">Paste the authorization code in Step 2 of the setup process</div>
+                    <div class="gcp-info-step">Click "Complete Setup" to finish the Gmail integration</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Extract OAuth parameters from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const authCode = urlParams.get('code');
+        const state = urlParams.get('state');
+        const scope = urlParams.get('scope');
+        const error = urlParams.get('error');
+
+        // Update UI with extracted data
+        function updateUI() {
+            if (error) {
+                // Update status for error
+                const statusBadge = document.querySelector('.gcp-status-badge');
+                statusBadge.style.background = '#fce8e6';
+                statusBadge.style.color = '#d93025';
+                statusBadge.style.borderColor = '#fad2cf';
+                statusBadge.textContent = 'Authorization failed';
+                statusBadge.querySelector('::before') && (statusBadge.style.setProperty('--before-content', '"✗"'));
+                
+                document.getElementById('authCodeDisplay').textContent = `Error: ${error}`;
+                return;
+            }
+
+            // Update state
+            document.getElementById('stateValue').textContent = state || 'Not provided';
+            
+            // Update scope count
+            const scopes = scope ? scope.split(' ').length : 0;
+            document.getElementById('scopeCount').textContent = `${scopes} permissions granted`;
+            
+            // Update auth code
+            if (authCode) {
+                document.getElementById('authCodeDisplay').textContent = authCode;
+                console.log('✅ Authorization code extracted:', authCode);
+            } else {
+                document.getElementById('authCodeDisplay').textContent = 'No authorization code received';
+            }
+
+            // Update timestamp
+            const now = new Date();
+            document.getElementById('authTime').textContent = now.toLocaleString();
+        }
+
+        // Copy authorization code to clipboard
+        function copyAuthCode() {
+            if (authCode) {
+                navigator.clipboard.writeText(authCode).then(() => {
+                    const btn = document.querySelector('.gcp-button-copy');
+                    const originalText = btn.textContent;
+                    btn.textContent = 'Copied!';
+                    btn.style.background = 'var(--gcp-green-light)';
+                    btn.style.color = 'var(--gcp-green)';
+                    btn.style.borderColor = '#c8e6c9';
+                    
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.style.background = 'var(--gcp-white)';
+                        btn.style.color = 'var(--gcp-grey-700)';
+                        btn.style.borderColor = 'var(--gcp-grey-300)';
+                    }, 2000);
+                }).catch(() => {
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = authCode;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    
+                    const btn = document.querySelector('.gcp-button-copy');
+                    btn.textContent = 'Copied!';
+                    setTimeout(() => btn.textContent = 'Copy', 2000);
+                });
+            }
+        }
+
+        // Complete integration function
+        function completeIntegration() {
+            if (authCode) {
+                // Try to communicate with parent window
+                try {
+                    if (window.opener && !window.opener.closed) {
+                        window.opener.postMessage({
+                            type: 'oauth_complete',
+                            authCode: authCode,
+                            state: state,
+                            scope: scope
+                        }, '*');
+                        window.close();
+                        return;
+                    }
+                } catch (e) {
+                    console.log('Could not communicate with parent window');
+                }
+
+                // Fallback: copy code and redirect
+                copyAuthCode();
+                setTimeout(() => {
+                    window.location.href = 'demo.html';
+                }, 1000);
+            } else {
+                alert('❌ No authorization code available');
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateUI();
+            
+            // Auto-copy authorization code after a short delay
+            if (authCode) {
+                setTimeout(() => {
+                    copyAuthCode();
+                }, 1500);
+            }
+        });
+
+        // Handle messages from other windows
+        window.addEventListener('message', (event) => {
+            console.log('Received message:', event.data);
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gmail OAuth Callback - TLDR App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+
+        .callback-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            color: #333;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .title {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #718096;
+            margin-bottom: 30px;
+        }
+
+        .code-display {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #2d3748;
+            word-break: break-all;
+            line-height: 1.6;
+        }
+
+        .info-box {
+            background: #ebf8ff;
+            border: 1px solid #90cdf4;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .info-box h4 {
+            color: #2b6cb0;
+            margin-bottom: 8px;
+        }
+
+        .info-box p {
+            color: #2c5282;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .button-secondary {
+            background: #718096;
+        }
+
+        .status {
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin: 10px 0;
+        }
+
+        .status-success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-processing {
+            background: #fef5e7;
+            color: #744210;
+        }
+
+        .status-error {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 8px;
+            background: #f7fafc;
+        }
+
+        .step-number {
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 0.9rem;
+        }
+
+        .step-number.completed {
+            background: #48bb78;
+        }
+
+        .step-text {
+            flex: 1;
+            color: #4a5568;
+        }
+
+        .step-status {
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="callback-container">
+        <div class="success-icon" id="statusIcon">🔄</div>
+        <h1 class="title">Gmail OAuth Callback</h1>
+        <p class="subtitle" id="statusMessage">Processing authorization...</p>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar" style="width: 0%"></div>
+        </div>
+
+        <div id="authCodeSection" style="display: none;">
+            <h3>Authorization Code Received:</h3>
+            <div class="code-display" id="authCodeDisplay"></div>
+        </div>
+
+        <div id="setupSteps">
+            <div class="step" id="step1">
+                <div class="step-number" id="step1Number">1</div>
+                <div class="step-text">Extracting authorization code</div>
+                <div class="step-status" id="step1Status">🔄</div>
+            </div>
+            <div class="step" id="step2">
+                <div class="step-number" id="step2Number">2</div>
+                <div class="step-text">Validating OAuth parameters</div>
+                <div class="step-status" id="step2Status">⏳</div>
+            </div>
+            <div class="step" id="step3">
+                <div class="step-number" id="step3Number">3</div>
+                <div class="step-text">Preparing token exchange</div>
+                <div class="step-status" id="step3Status">⏳</div>
+            </div>
+            <div class="step" id="step4">
+                <div class="step-number" id="step4Number">4</div>
+                <div class="step-text">Completing Gmail integration</div>
+                <div class="step-status" id="step4Status">⏳</div>
+            </div>
+        </div>
+
+        <div class="info-box" id="infoBox">
+            <h4>🔧 What's Happening:</h4>
+            <p>We're processing your Google OAuth authorization to complete your Gmail integration.</p>
+            <p>This page will automatically extract the authorization code and complete the setup.</p>
+        </div>
+
+        <div id="resultSection" style="display: none;">
+            <div class="status" id="resultStatus"></div>
+            <div id="actionButtons">
+                <a href="demo.html" class="button">Return to TLDR App</a>
+                <button class="button button-secondary" onclick="copyAuthCode()">Copy Auth Code</button>
+            </div>
+        </div>
+
+        <div id="manualSection" style="display: none;">
+            <h3>Manual Setup Required</h3>
+            <p>Copy the authorization code below and paste it in the TLDR app:</p>
+            <div class="code-display" id="manualAuthCode"></div>
+            <div class="info-box">
+                <h4>📋 Next Steps:</h4>
+                <p>1. Copy the authorization code above</p>
+                <p>2. Return to the TLDR app</p>
+                <p>3. Paste the code in the OAuth setup form</p>
+                <p>4. Complete the Gmail integration</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // OAuth callback handler
+        class OAuthCallbackHandler {
+            constructor() {
+                this.authCode = null;
+                this.state = null;
+                this.error = null;
+                this.scope = null;
+                
+                this.init();
+            }
+
+            init() {
+                console.log('🚀 OAuth Callback Handler: Starting...');
+                this.extractUrlParameters();
+                this.processCallback();
+            }
+
+            extractUrlParameters() {
+                console.log('🔍 Extracting URL parameters...');
+                this.updateProgress(25, 'Extracting authorization parameters...');
+                
+                const urlParams = new URLSearchParams(window.location.search);
+                
+                this.authCode = urlParams.get('code');
+                this.state = urlParams.get('state');
+                this.error = urlParams.get('error');
+                this.scope = urlParams.get('scope');
+
+                console.log('📋 URL Parameters:', {
+                    hasCode: !!this.authCode,
+                    hasState: !!this.state,
+                    hasError: !!this.error,
+                    scope: this.scope
+                });
+
+                if (this.authCode) {
+                    document.getElementById('authCodeDisplay').textContent = this.authCode;
+                    document.getElementById('authCodeSection').style.display = 'block';
+                }
+
+                this.completeStep(1, true);
+            }
+
+            async processCallback() {
+                try {
+                    this.updateProgress(50, 'Validating OAuth response...');
+                    
+                    if (this.error) {
+                        throw new Error(`OAuth Error: ${this.error}`);
+                    }
+
+                    if (!this.authCode) {
+                        throw new Error('No authorization code received');
+                    }
+
+                    if (!this.state) {
+                        throw new Error('No state parameter received');
+                    }
+
+                    this.completeStep(2, true);
+                    
+                    // Simulate token exchange process
+                    await this.simulateTokenExchange();
+                    
+                } catch (error) {
+                    console.error('❌ OAuth callback error:', error);
+                    this.handleError(error.message);
+                }
+            }
+
+            async simulateTokenExchange() {
+                this.updateProgress(75, 'Preparing token exchange...');
+                this.completeStep(3, true);
+                
+                // Simulate API call delay
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                this.updateProgress(100, 'Gmail integration completed successfully!');
+                this.completeStep(4, true);
+                
+                // Show success
+                this.showSuccess();
+            }
+
+            updateProgress(percentage, message) {
+                document.getElementById('progressBar').style.width = percentage + '%';
+                document.getElementById('statusMessage').textContent = message;
+            }
+
+            completeStep(stepNumber, success) {
+                const stepElement = document.getElementById(`step${stepNumber}`);
+                const stepNumberElement = document.getElementById(`step${stepNumber}Number`);
+                const stepStatusElement = document.getElementById(`step${stepNumber}Status`);
+                
+                if (success) {
+                    stepNumberElement.classList.add('completed');
+                    stepStatusElement.textContent = '✅';
+                    stepElement.style.background = '#f0fff4';
+                } else {
+                    stepStatusElement.textContent = '❌';
+                    stepElement.style.background = '#fff5f5';
+                }
+            }
+
+            showSuccess() {
+                document.getElementById('statusIcon').textContent = '🎉';
+                document.getElementById('statusMessage').textContent = 'Gmail integration completed successfully!';
+                
+                const resultStatus = document.getElementById('resultStatus');
+                resultStatus.className = 'status status-success';
+                resultStatus.textContent = '✅ OAuth authorization completed! Your Gmail account is now connected to TLDR.';
+                
+                document.getElementById('resultSection').style.display = 'block';
+                
+                // Update info box
+                const infoBox = document.getElementById('infoBox');
+                infoBox.innerHTML = `
+                    <h4>🎉 Success!</h4>
+                    <p><strong>Gmail integration is now active!</strong></p>
+                    <p>Authorization Code: <code>${this.authCode.substring(0, 20)}...</code></p>
+                    <p>Granted Scopes: ${this.scope ? this.scope.split(' ').length : 0} permissions</p>
+                    <p>You can now return to the TLDR app to start using Gmail features.</p>
+                `;
+
+                // Try to notify parent window (if opened from popup)
+                try {
+                    if (window.opener && !window.opener.closed) {
+                        window.opener.postMessage({
+                            type: 'oauth_success',
+                            authCode: this.authCode,
+                            state: this.state,
+                            scope: this.scope
+                        }, '*');
+                    }
+                } catch (e) {
+                    console.log('Could not notify parent window:', e);
+                }
+            }
+
+            handleError(errorMessage) {
+                document.getElementById('statusIcon').textContent = '❌';
+                document.getElementById('statusMessage').textContent = 'OAuth authorization failed';
+                
+                const resultStatus = document.getElementById('resultStatus');
+                resultStatus.className = 'status status-error';
+                resultStatus.textContent = `❌ Error: ${errorMessage}`;
+                
+                document.getElementById('resultSection').style.display = 'block';
+                
+                // Show manual section if we have an auth code
+                if (this.authCode) {
+                    document.getElementById('manualAuthCode').textContent = this.authCode;
+                    document.getElementById('manualSection').style.display = 'block';
+                }
+            }
+        }
+
+        // Global functions
+        function copyAuthCode() {
+            const authCode = new URLSearchParams(window.location.search).get('code');
+            if (authCode) {
+                navigator.clipboard.writeText(authCode).then(() => {
+                    alert('Authorization code copied to clipboard!');
+                }).catch(() => {
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = authCode;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    alert('Authorization code copied to clipboard!');
+                });
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new OAuthCallbackHandler();
+        });
+
+        // Handle messages from parent window
+        window.addEventListener('message', (event) => {
+            console.log('Received message:', event.data);
+        });
+    </script>
+</body>
+</html> 

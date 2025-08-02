@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gmail OAuth Callback Handler</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            color: #333;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        .title {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #2d3748;
+        }
+        .code-box {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 14px;
+            word-break: break-all;
+            color: #2d3748;
+        }
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        .info {
+            background: #ebf8ff;
+            border: 1px solid #90cdf4;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 20px 0;
+            text-align: left;
+            color: #2c5282;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🎉 Gmail OAuth Success!</h1>
+        <p>Your authorization code has been extracted:</p>
+        
+        <div class="code-box" id="authCode">
+            <!-- Authorization code will appear here -->
+        </div>
+        
+        <button class="button" onclick="copyCode()">Copy Authorization Code</button>
+        <button class="button" onclick="window.location.href='demo.html'">Return to TLDR App</button>
+        
+        <div class="info">
+            <h4>✅ What to do next:</h4>
+            <p>1. <strong>Copy the authorization code</strong> above</p>
+            <p>2. <strong>Return to the TLDR app</strong> (Gmail OAuth setup)</p>
+            <p>3. <strong>Paste the code</strong> in Step 2 of the setup wizard</p>
+            <p>4. <strong>Complete the setup</strong> to finish Gmail integration</p>
+        </div>
+        
+        <div class="info" id="debugInfo" style="display: none;">
+            <h4>🔧 Debug Information:</h4>
+            <p><strong>State:</strong> <span id="stateValue"></span></p>
+            <p><strong>Scope:</strong> <span id="scopeValue"></span></p>
+            <p><strong>Full URL:</strong> <code id="fullUrl"></code></p>
+        </div>
+    </div>
+
+    <script>
+        // Extract URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const authCode = urlParams.get('code');
+        const state = urlParams.get('state');
+        const scope = urlParams.get('scope');
+        const error = urlParams.get('error');
+
+        // Display the authorization code
+        if (authCode) {
+            document.getElementById('authCode').textContent = authCode;
+            console.log('✅ Authorization code extracted:', authCode);
+        } else if (error) {
+            document.getElementById('authCode').innerHTML = `<span style="color: red;">Error: ${error}</span>`;
+            console.error('❌ OAuth error:', error);
+        } else {
+            document.getElementById('authCode').innerHTML = `<span style="color: orange;">No authorization code found in URL</span>`;
+            console.warn('⚠️ No authorization code found');
+        }
+
+        // Show debug info
+        document.getElementById('stateValue').textContent = state || 'Not provided';
+        document.getElementById('scopeValue').textContent = scope || 'Not provided';
+        document.getElementById('fullUrl').textContent = window.location.href;
+
+        // Copy function
+        function copyCode() {
+            if (authCode) {
+                navigator.clipboard.writeText(authCode).then(() => {
+                    alert('✅ Authorization code copied to clipboard!');
+                }).catch(() => {
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = authCode;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    alert('✅ Authorization code copied to clipboard!');
+                });
+            } else {
+                alert('❌ No authorization code to copy');
+            }
+        }
+
+        // Show debug info on click
+        document.getElementById('authCode').addEventListener('click', () => {
+            const debugInfo = document.getElementById('debugInfo');
+            debugInfo.style.display = debugInfo.style.display === 'none' ? 'block' : 'none';
+        });
+
+        // Auto-copy on load if code exists
+        if (authCode) {
+            setTimeout(() => {
+                copyCode();
+            }, 1000);
+        }
+    </script>
+</body>
+</html> 

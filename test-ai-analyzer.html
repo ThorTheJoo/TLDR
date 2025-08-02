@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test AI Email Analyzer</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .status { padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .success { background: #e8f5e8; color: #137333; }
+        .error { background: #fce8e6; color: #d93025; }
+        .info { background: #e8f0fe; color: #1a73e8; }
+        .button { background: #1a73e8; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        .test-email { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test AI Email Analyzer</h1>
+    
+    <div id="status">
+        <div class="status info">Testing AI Email Analyzer...</div>
+    </div>
+    
+    <button class="button" onclick="testInvoiceDetection()">Test Invoice Detection</button>
+    <button class="button" onclick="testRegularEmail()">Test Regular Email</button>
+    <button class="button" onclick="testBatchAnalysis()">Test Batch Analysis</button>
+    
+    <div id="results">
+        <p>Test results will appear here...</p>
+    </div>
+
+    <script>
+        async function testInvoiceDetection() {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            
+            statusDiv.innerHTML = '<div class="status info">Testing invoice detection...</div>';
+            
+            const testEmail = {
+                subject: 'Invoice for Web Development Services - ABC Company',
+                from: 'billing@abc-company.com',
+                body: 'Dear Customer, Please find attached invoice #INV-2024-001 for web development services rendered. Amount due: $2,500.00. Payment due by 30 days. Thank you for your business.'
+            };
+            
+            try {
+                const response = await fetch('http://localhost:3004/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        emailId: 'test-invoice-email',
+                        emailContent: testEmail
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    statusDiv.innerHTML = `
+                        <div class="status success">
+                            ✅ Invoice detection test successful!
+                        </div>
+                    `;
+                    
+                    resultsDiv.innerHTML = `
+                        <h3>📧 Test Email:</h3>
+                        <div class="test-email">
+                            <p><strong>Subject:</strong> ${testEmail.subject}</p>
+                            <p><strong>From:</strong> ${testEmail.from}</p>
+                            <p><strong>Body:</strong> ${testEmail.body}</p>
+                        </div>
+                        
+                        <h3>🧠 AI Analysis Results:</h3>
+                        <div class="test-email">
+                            <p><strong>Contains Invoice:</strong> ${result.analysis.containsInvoice ? '✅ Yes' : '❌ No'}</p>
+                            <p><strong>Vendor:</strong> ${result.analysis.invoiceDetails.vendor}</p>
+                            <p><strong>Amount:</strong> ${result.analysis.invoiceDetails.amount || 'Not detected'}</p>
+                            <p><strong>Date:</strong> ${result.analysis.invoiceDetails.date}</p>
+                            <p><strong>Invoice #:</strong> ${result.analysis.invoiceDetails.invoiceNumber}</p>
+                            <p><strong>Topics:</strong> ${result.analysis.topics.join(', ')}</p>
+                            <p><strong>Urgency:</strong> ${result.analysis.urgency}</p>
+                            <p><strong>Analysis Method:</strong> ${result.analysis.analysisMethod || 'AI'}</p>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="status error">
+                        ❌ Invoice detection test failed: ${error.message}
+                    </div>
+                `;
+                resultsDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+
+        async function testRegularEmail() {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            
+            statusDiv.innerHTML = '<div class="status info">Testing regular email analysis...</div>';
+            
+            const testEmail = {
+                subject: 'Meeting Tomorrow - Project Discussion',
+                from: 'colleague@company.com',
+                body: 'Hi team, let\'s meet tomorrow at 2 PM to discuss the project progress. Please bring your updates and any issues you\'ve encountered. This is urgent as we have a deadline coming up.'
+            };
+            
+            try {
+                const response = await fetch('http://localhost:3004/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        emailId: 'test-regular-email',
+                        emailContent: testEmail
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    statusDiv.innerHTML = `
+                        <div class="status success">
+                            ✅ Regular email analysis test successful!
+                        </div>
+                    `;
+                    
+                    resultsDiv.innerHTML = `
+                        <h3>📧 Test Email:</h3>
+                        <div class="test-email">
+                            <p><strong>Subject:</strong> ${testEmail.subject}</p>
+                            <p><strong>From:</strong> ${testEmail.from}</p>
+                            <p><strong>Body:</strong> ${testEmail.body}</p>
+                        </div>
+                        
+                        <h3>🧠 AI Analysis Results:</h3>
+                        <div class="test-email">
+                            <p><strong>Contains Invoice:</strong> ${result.analysis.containsInvoice ? '✅ Yes' : '❌ No'}</p>
+                            <p><strong>Topics:</strong> ${result.analysis.topics.join(', ')}</p>
+                            <p><strong>Urgency:</strong> ${result.analysis.urgency}</p>
+                            <p><strong>Action Items:</strong></p>
+                            <ul>${result.analysis.actionItems.map(item => `<li>${item}</li>`).join('')}</ul>
+                            <p><strong>Summary:</strong> ${result.analysis.summary}</p>
+                            <p><strong>Analysis Method:</strong> ${result.analysis.analysisMethod || 'AI'}</p>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="status error">
+                        ❌ Regular email analysis test failed: ${error.message}
+                    </div>
+                `;
+                resultsDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+
+        async function testBatchAnalysis() {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            
+            statusDiv.innerHTML = '<div class="status info">Testing batch analysis...</div>';
+            
+            const testEmails = [
+                {
+                    id: 'test-email-1',
+                    subject: 'Invoice for Services - Vendor A',
+                    from: 'billing@vendor-a.com',
+                    body: 'Please find attached invoice #INV-A-001. Amount due: $1,000.00.'
+                },
+                {
+                    id: 'test-email-2',
+                    subject: 'Meeting Reminder',
+                    from: 'manager@company.com',
+                    body: 'Don\'t forget our team meeting tomorrow at 10 AM.'
+                },
+                {
+                    id: 'test-email-3',
+                    subject: 'Payment Due - Vendor B',
+                    from: 'accounts@vendor-b.com',
+                    body: 'Your account has an outstanding balance of $750.00. Please remit payment.'
+                }
+            ];
+            
+            try {
+                const response = await fetch('http://localhost:3004/api/analyze-batch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ emails: testEmails })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    statusDiv.innerHTML = `
+                        <div class="status success">
+                            ✅ Batch analysis test successful!
+                        </div>
+                    `;
+                    
+                    const invoices = result.results.filter(r => r.analysis.containsInvoice);
+                    const regularEmails = result.results.filter(r => !r.analysis.containsInvoice);
+                    
+                    resultsDiv.innerHTML = `
+                        <h3>📊 Batch Analysis Results:</h3>
+                        <div class="test-email">
+                            <p><strong>Total Emails:</strong> ${result.results.length}</p>
+                            <p><strong>Invoices Found:</strong> ${invoices.length}</p>
+                            <p><strong>Regular Emails:</strong> ${regularEmails.length}</p>
+                        </div>
+                        
+                        <h3>💰 Invoices Detected:</h3>
+                        ${invoices.map(item => `
+                            <div class="test-email">
+                                <p><strong>Email:</strong> ${item.emailId}</p>
+                                <p><strong>Vendor:</strong> ${item.analysis.invoiceDetails.vendor}</p>
+                                <p><strong>Amount:</strong> ${item.analysis.invoiceDetails.amount || 'Not detected'}</p>
+                            </div>
+                        `).join('')}
+                        
+                        <h3>📧 Regular Emails:</h3>
+                        ${regularEmails.map(item => `
+                            <div class="test-email">
+                                <p><strong>Email:</strong> ${item.emailId}</p>
+                                <p><strong>Topics:</strong> ${item.analysis.topics.join(', ')}</p>
+                                <p><strong>Urgency:</strong> ${item.analysis.urgency}</p>
+                            </div>
+                        `).join('')}
+                    `;
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="status error">
+                        ❌ Batch analysis test failed: ${error.message}
+                    </div>
+                `;
+                resultsDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+
+        // Auto-test on page load
+        window.onload = function() {
+            testInvoiceDetection();
+        };
+    </script>
+</body>
+</html> 

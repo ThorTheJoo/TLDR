@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TLDR - Gmail Integration Demo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@300;400;500;600&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gcp-blue: #1a73e8;
+            --gcp-blue-hover: #1557b0;
+            --gcp-green: #137333;
+            --gcp-green-light: #e8f5e8;
+            --gcp-red: #d93025;
+            --gcp-yellow: #f9ab00;
+            --gcp-grey-50: #f8f9fa;
+            --gcp-grey-100: #f1f3f4;
+            --gcp-grey-200: #e8eaed;
+            --gcp-grey-300: #dadce0;
+            --gcp-grey-400: #bdc1c6;
+            --gcp-grey-500: #9aa0a6;
+            --gcp-grey-600: #80868b;
+            --gcp-grey-700: #5f6368;
+            --gcp-grey-800: #3c4043;
+            --gcp-grey-900: #202124;
+            --gcp-white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
+            background-color: var(--gcp-grey-50);
+            color: var(--gcp-grey-900);
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        /* GCP Header */
+        .gcp-header {
+            background: var(--gcp-white);
+            border-bottom: 1px solid var(--gcp-grey-200);
+            height: 64px;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .gcp-logo {
+            display: flex;
+            align-items: center;
+            font-size: 22px;
+            font-weight: 400;
+            color: var(--gcp-grey-700);
+            margin-right: 32px;
+        }
+
+        .gcp-logo::before {
+            content: "";
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #4285f4, #34a853, #fbbc04, #ea4335);
+            border-radius: 4px;
+            margin-right: 8px;
+        }
+
+        .gcp-breadcrumb {
+            font-size: 14px;
+            color: var(--gcp-grey-600);
+            font-weight: 400;
+        }
+
+        .gcp-breadcrumb a {
+            color: var(--gcp-blue);
+            text-decoration: none;
+        }
+
+        .gcp-breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        /* Main Content */
+        .gcp-content {
+            margin-top: 64px;
+            min-height: calc(100vh - 64px);
+            background: var(--gcp-grey-50);
+        }
+
+        .gcp-main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* Page Header */
+        .gcp-page-header {
+            background: var(--gcp-white);
+            border: 1px solid var(--gcp-grey-200);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+        }
+
+        .gcp-page-title {
+            font-size: 28px;
+            font-weight: 400;
+            color: var(--gcp-grey-900);
+            margin-bottom: 8px;
+            font-family: 'Google Sans', sans-serif;
+        }
+
+        .gcp-page-subtitle {
+            font-size: 14px;
+            color: var(--gcp-grey-700);
+            font-weight: 400;
+        }
+
+        /* Cards */
+        .gcp-card {
+            background: var(--gcp-white);
+            border: 1px solid var(--gcp-grey-200);
+            border-radius: 8px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+            overflow: hidden;
+        }
+
+        .gcp-card-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--gcp-grey-200);
+            background: var(--gcp-white);
+        }
+
+        .gcp-card-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--gcp-grey-900);
+            margin: 0;
+            font-family: 'Google Sans', sans-serif;
+        }
+
+        .gcp-card-content {
+            padding: 24px;
+        }
+
+        /* Buttons */
+        .gcp-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Google Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 20px;
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            min-height: 36px;
+            box-sizing: border-box;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .gcp-button-primary {
+            background: var(--gcp-blue);
+            color: var(--gcp-white);
+            border-color: var(--gcp-blue);
+        }
+
+        .gcp-button-primary:hover {
+            background: var(--gcp-blue-hover);
+            border-color: var(--gcp-blue-hover);
+            box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+        }
+
+        .gcp-button-secondary {
+            background: var(--gcp-white);
+            color: var(--gcp-blue);
+            border-color: var(--gcp-grey-300);
+        }
+
+        .gcp-button-secondary:hover {
+            background: var(--gcp-grey-50);
+            border-color: var(--gcp-grey-400);
+        }
+
+        /* Form Elements */
+        .gcp-form-group {
+            margin-bottom: 16px;
+        }
+
+        .gcp-form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gcp-grey-900);
+            margin-bottom: 8px;
+        }
+
+        .gcp-form-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--gcp-grey-300);
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .gcp-form-input:focus {
+            outline: none;
+            border-color: var(--gcp-blue);
+        }
+
+        .gcp-form-textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--gcp-grey-300);
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .gcp-form-textarea:focus {
+            outline: none;
+            border-color: var(--gcp-blue);
+        }
+
+        /* Email List */
+        .email-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--gcp-grey-200);
+            border-radius: 4px;
+        }
+
+        .email-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--gcp-grey-100);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .email-item:hover {
+            background-color: var(--gcp-grey-50);
+        }
+
+        .email-item.unread {
+            background-color: var(--gcp-blue-light);
+            font-weight: 500;
+        }
+
+        .email-subject {
+            font-weight: 500;
+            color: var(--gcp-grey-900);
+            margin-bottom: 4px;
+        }
+
+        .email-from {
+            font-size: 12px;
+            color: var(--gcp-grey-600);
+            margin-bottom: 2px;
+        }
+
+        .email-snippet {
+            font-size: 12px;
+            color: var(--gcp-grey-700);
+            line-height: 1.4;
+        }
+
+        /* Status Badge */
+        .gcp-status-badge {
+            display: inline-flex;
+            align-items: center;
+            background: var(--gcp-green-light);
+            color: var(--gcp-green);
+            border: 1px solid #c8e6c9;
+            border-radius: 16px;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+
+        /* Grid Layout */
+        .gcp-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        /* Modal */
+        .gcp-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+        }
+
+        .gcp-modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--gcp-white);
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .gcp-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .gcp-modal-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--gcp-grey-900);
+        }
+
+        .gcp-modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--gcp-grey-500);
+        }
+
+        .gcp-modal-close:hover {
+            color: var(--gcp-grey-700);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .gcp-main {
+                padding: 16px;
+            }
+
+            .gcp-page-header,
+            .gcp-card-content {
+                padding: 16px;
+            }
+
+            .gcp-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Google Cloud Platform Header -->
+    <div class="gcp-header">
+        <div class="gcp-logo">
+            TLDR Gmail Integration
+        </div>
+        <div class="gcp-breadcrumb">
+            <a href="demo.html">TLDR App</a> > <a href="#">Integrations</a> > Gmail Demo
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="gcp-content">
+        <div class="gcp-main">
+            <!-- Page Header -->
+            <div class="gcp-page-header">
+                <h1 class="gcp-page-title">Gmail Integration Demo</h1>
+                <p class="gcp-page-subtitle">Read, send, and manage your emails with full Gmail API integration</p>
+            </div>
+
+            <!-- OAuth Setup Card -->
+            <div class="gcp-card">
+                <div class="gcp-card-header">
+                    <h2 class="gcp-card-title">🔐 Gmail OAuth Setup</h2>
+                </div>
+                <div class="gcp-card-content">
+                    <div class="gcp-status-badge">OAuth callback server running</div>
+                    <p style="color: var(--gcp-grey-700); margin-bottom: 24px;">
+                        Your OAuth callback server is ready to handle Gmail authorization. Complete the OAuth flow to access your emails.
+                    </p>
+                    
+                    <div class="gcp-button-group">
+                        <button class="gcp-button gcp-button-primary" onclick="setupGmailOAuth()">
+                            Setup Gmail OAuth
+                        </button>
+                        <button class="gcp-button gcp-button-secondary" onclick="testGmailConnection()">
+                            Test Connection
+                        </button>
+                        <button class="gcp-button gcp-button-secondary" onclick="showOAuthStatus()">
+                            OAuth Status
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email Management Grid -->
+            <div class="gcp-grid">
+                <!-- Read Emails -->
+                <div class="gcp-card">
+                    <div class="gcp-card-header">
+                        <h2 class="gcp-card-title">📧 Read Emails</h2>
+                    </div>
+                    <div class="gcp-card-content">
+                        <div class="gcp-form-group">
+                            <label class="gcp-form-label">Search Query</label>
+                            <input type="text" class="gcp-form-input" id="emailSearch" placeholder="from:example@gmail.com subject:important">
+                        </div>
+                        <div class="gcp-form-group">
+                            <label class="gcp-form-label">Max Results</label>
+                            <input type="number" class="gcp-form-input" id="maxResults" value="20" min="1" max="100">
+                        </div>
+                        <button class="gcp-button gcp-button-primary" onclick="loadEmails()">
+                            Load Emails
+                        </button>
+                        <button class="gcp-button gcp-button-secondary" onclick="refreshEmails()">
+                            Refresh
+                        </button>
+                        
+                        <div id="emailList" class="email-list" style="margin-top: 16px;">
+                            <p style="text-align: center; color: var(--gcp-grey-500); padding: 24px;">
+                                Click "Load Emails" to fetch your Gmail messages
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Send Email -->
+                <div class="gcp-card">
+                    <div class="gcp-card-header">
+                        <h2 class="gcp-card-title">✉️ Send Email</h2>
+                    </div>
+                    <div class="gcp-card-content">
+                        <div class="gcp-form-group">
+                            <label class="gcp-form-label">To</label>
+                            <input type="email" class="gcp-form-input" id="emailTo" placeholder="recipient@example.com">
+                        </div>
+                        <div class="gcp-form-group">
+                            <label class="gcp-form-label">Subject</label>
+                            <input type="text" class="gcp-form-input" id="emailSubject" placeholder="Email subject">
+                        </div>
+                        <div class="gcp-form-group">
+                            <label class="gcp-form-label">Message</label>
+                            <textarea class="gcp-form-textarea" id="emailBody" placeholder="Type your message here..."></textarea>
+                        </div>
+                        <button class="gcp-button gcp-button-primary" onclick="sendEmail()">
+                            Send Email
+                        </button>
+                        <button class="gcp-button gcp-button-secondary" onclick="clearEmailForm()">
+                            Clear Form
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email Actions -->
+            <div class="gcp-card">
+                <div class="gcp-card-header">
+                    <h2 class="gcp-card-title">🛠️ Email Actions</h2>
+                </div>
+                <div class="gcp-card-content">
+                    <div class="gcp-button-group">
+                        <button class="gcp-button gcp-button-secondary" onclick="markAsRead()">
+                            Mark as Read
+                        </button>
+                        <button class="gcp-button gcp-button-secondary" onclick="markAsUnread()">
+                            Mark as Unread
+                        </button>
+                        <button class="gcp-button gcp-button-secondary" onclick="deleteEmail()">
+                            Delete Email
+                        </button>
+                        <button class="gcp-button gcp-button-secondary" onclick="replyToEmail()">
+                            Reply
+                        </button>
+                        <button class="gcp-button gcp-button-secondary" onclick="forwardEmail()">
+                            Forward
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- OAuth Setup Modal -->
+    <div id="oauthModal" class="gcp-modal">
+        <div class="gcp-modal-content">
+            <div class="gcp-modal-header">
+                <h3 class="gcp-modal-title">Gmail OAuth Setup</h3>
+                <button class="gcp-modal-close" onclick="closeModal('oauthModal')">&times;</button>
+            </div>
+            <div class="gcp-form-group">
+                <label class="gcp-form-label">OAuth JSON File</label>
+                <input type="file" class="gcp-form-input" id="oauthFile" accept=".json">
+            </div>
+            <div class="gcp-form-group">
+                <label class="gcp-form-label">Authorization Code</label>
+                <input type="text" class="gcp-form-input" id="authCode" placeholder="Paste authorization code from OAuth callback">
+            </div>
+            <div class="gcp-button-group">
+                <button class="gcp-button gcp-button-primary" onclick="initializeGmail()">
+                    Initialize Gmail API
+                </button>
+                <button class="gcp-button gcp-button-secondary" onclick="closeModal('oauthModal')">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Detail Modal -->
+    <div id="emailModal" class="gcp-modal">
+        <div class="gcp-modal-content">
+            <div class="gcp-modal-header">
+                <h3 class="gcp-modal-title">Email Details</h3>
+                <button class="gcp-modal-close" onclick="closeModal('emailModal')">&times;</button>
+            </div>
+            <div id="emailDetails">
+                <!-- Email details will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let gmailService = null;
+        let currentEmails = [];
+        let selectedEmailId = null;
+
+        // Modal functions
+        function setupGmailOAuth() {
+            document.getElementById('oauthModal').style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function showOAuthStatus() {
+            alert('OAuth Server Status:\n\n✅ Server running on localhost:3000\n✅ Callback URL: http://localhost:3000/oauth/callback\n✅ Ready to handle Gmail OAuth callbacks\n✅ Professional GCP interface ready');
+        }
+
+        function testGmailConnection() {
+            if (!gmailService) {
+                alert('❌ Gmail API not initialized. Please complete OAuth setup first.');
+                return;
+            }
+            
+            // Test connection by getting user email
+            gmailService.getUserEmail()
+                .then(email => {
+                    alert(`✅ Gmail connection successful!\n\nUser email: ${email}`);
+                })
+                .catch(error => {
+                    alert(`❌ Gmail connection failed:\n\n${error.message}`);
+                });
+        }
+
+        function initializeGmail() {
+            const oauthFile = document.getElementById('oauthFile').files[0];
+            const authCode = document.getElementById('authCode').value;
+
+            if (!oauthFile || !authCode) {
+                alert('❌ Please select OAuth JSON file and enter authorization code.');
+                return;
+            }
+
+            // Read OAuth file
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const credentials = JSON.parse(e.target.result);
+                    
+                    // Initialize Gmail service (this would be done server-side in real app)
+                    console.log('Initializing Gmail API with credentials:', credentials);
+                    console.log('Authorization code:', authCode);
+                    
+                    alert('✅ Gmail API initialization started!\n\nIn a real application, this would:\n1. Exchange auth code for tokens\n2. Initialize Gmail API client\n3. Enable email reading/sending\n\nFor demo purposes, you can now test the interface.');
+                    
+                    // Simulate successful initialization
+                    gmailService = {
+                        isReady: () => true,
+                        getUserEmail: () => Promise.resolve('user@gmail.com'),
+                        listEmails: () => Promise.resolve({ emails: getMockEmails() }),
+                        sendEmail: (data) => Promise.resolve({ success: true, messageId: 'mock-id' })
+                    };
+                    
+                    closeModal('oauthModal');
+                } catch (error) {
+                    alert(`❌ Invalid OAuth JSON file:\n\n${error.message}`);
+                }
+            };
+            reader.readAsText(oauthFile);
+        }
+
+        function loadEmails() {
+            if (!gmailService) {
+                alert('❌ Gmail API not initialized. Please complete OAuth setup first.');
+                return;
+            }
+
+            const searchQuery = document.getElementById('emailSearch').value;
+            const maxResults = document.getElementById('maxResults').value;
+
+            // Show loading
+            const emailList = document.getElementById('emailList');
+            emailList.innerHTML = '<p style="text-align: center; color: var(--gcp-grey-500); padding: 24px;">Loading emails...</p>';
+
+            // Load emails (mock data for demo)
+            setTimeout(() => {
+                currentEmails = getMockEmails();
+                displayEmails(currentEmails);
+            }, 1000);
+        }
+
+        function refreshEmails() {
+            loadEmails();
+        }
+
+        function displayEmails(emails) {
+            const emailList = document.getElementById('emailList');
+            
+            if (emails.length === 0) {
+                emailList.innerHTML = '<p style="text-align: center; color: var(--gcp-grey-500); padding: 24px;">No emails found</p>';
+                return;
+            }
+
+            emailList.innerHTML = emails.map(email => `
+                <div class="email-item ${email.isRead ? '' : 'unread'}" onclick="selectEmail('${email.id}')">
+                    <div class="email-subject">${email.subject}</div>
+                    <div class="email-from">From: ${email.from}</div>
+                    <div class="email-snippet">${email.snippet}</div>
+                </div>
+            `).join('');
+        }
+
+        function selectEmail(emailId) {
+            selectedEmailId = emailId;
+            const email = currentEmails.find(e => e.id === emailId);
+            
+            if (email) {
+                showEmailDetails(email);
+            }
+        }
+
+        function showEmailDetails(email) {
+            const emailDetails = document.getElementById('emailDetails');
+            emailDetails.innerHTML = `
+                <div style="margin-bottom: 16px;">
+                    <strong>Subject:</strong> ${email.subject}<br>
+                    <strong>From:</strong> ${email.from}<br>
+                    <strong>To:</strong> ${email.to}<br>
+                    <strong>Date:</strong> ${email.date}<br>
+                    <strong>Status:</strong> ${email.isRead ? 'Read' : 'Unread'}
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <strong>Message:</strong><br>
+                    <div style="background: var(--gcp-grey-50); padding: 12px; border-radius: 4px; margin-top: 8px;">
+                        ${email.body || email.snippet}
+                    </div>
+                </div>
+                <div class="gcp-button-group">
+                    <button class="gcp-button gcp-button-secondary" onclick="replyToEmail()">Reply</button>
+                    <button class="gcp-button gcp-button-secondary" onclick="forwardEmail()">Forward</button>
+                    <button class="gcp-button gcp-button-secondary" onclick="deleteEmail()">Delete</button>
+                </div>
+            `;
+            
+            document.getElementById('emailModal').style.display = 'block';
+        }
+
+        function sendEmail() {
+            const to = document.getElementById('emailTo').value;
+            const subject = document.getElementById('emailSubject').value;
+            const body = document.getElementById('emailBody').value;
+
+            if (!to || !subject || !body) {
+                alert('❌ Please fill in all email fields.');
+                return;
+            }
+
+            if (!gmailService) {
+                alert('❌ Gmail API not initialized. Please complete OAuth setup first.');
+                return;
+            }
+
+            // Show sending status
+            alert('📧 Sending email...\n\nIn a real application, this would send the email via Gmail API.');
+
+            // Simulate sending
+            setTimeout(() => {
+                alert('✅ Email sent successfully!');
+                clearEmailForm();
+            }, 2000);
+        }
+
+        function clearEmailForm() {
+            document.getElementById('emailTo').value = '';
+            document.getElementById('emailSubject').value = '';
+            document.getElementById('emailBody').value = '';
+        }
+
+        function markAsRead() {
+            if (!selectedEmailId) {
+                alert('❌ Please select an email first.');
+                return;
+            }
+            alert('✅ Email marked as read!');
+        }
+
+        function markAsUnread() {
+            if (!selectedEmailId) {
+                alert('❌ Please select an email first.');
+                return;
+            }
+            alert('✅ Email marked as unread!');
+        }
+
+        function deleteEmail() {
+            if (!selectedEmailId) {
+                alert('❌ Please select an email first.');
+                return;
+            }
+            if (confirm('Are you sure you want to delete this email?')) {
+                alert('✅ Email deleted!');
+                closeModal('emailModal');
+                loadEmails();
+            }
+        }
+
+        function replyToEmail() {
+            if (!selectedEmailId) {
+                alert('❌ Please select an email first.');
+                return;
+            }
+            alert('📧 Reply feature would open compose form with pre-filled recipient and subject.');
+        }
+
+        function forwardEmail() {
+            if (!selectedEmailId) {
+                alert('❌ Please select an email first.');
+                return;
+            }
+            alert('📧 Forward feature would open compose form with email content.');
+        }
+
+        // Mock email data for demo
+        function getMockEmails() {
+            return [
+                {
+                    id: '1',
+                    subject: 'Welcome to TLDR Gmail Integration',
+                    from: 'tldr@example.com',
+                    to: 'user@gmail.com',
+                    date: '2024-01-15 10:30 AM',
+                    snippet: 'Thank you for setting up Gmail integration with TLDR. You can now read and send emails directly from the app.',
+                    body: 'Thank you for setting up Gmail integration with TLDR. You can now read and send emails directly from the app. This is a full-featured email client with OAuth security.',
+                    isRead: false
+                },
+                {
+                    id: '2',
+                    subject: 'Meeting Reminder - Project Review',
+                    from: 'manager@company.com',
+                    to: 'user@gmail.com',
+                    date: '2024-01-15 09:15 AM',
+                    snippet: 'Reminder: Project review meeting tomorrow at 2 PM. Please prepare your presentation.',
+                    body: 'Hi,\n\nThis is a reminder for tomorrow\'s project review meeting at 2 PM. Please prepare your presentation and bring any questions you may have.\n\nBest regards,\nManager',
+                    isRead: true
+                },
+                {
+                    id: '3',
+                    subject: 'Invoice #12345 - Payment Received',
+                    from: 'billing@service.com',
+                    to: 'user@gmail.com',
+                    date: '2024-01-14 03:45 PM',
+                    snippet: 'Your payment of $99.99 has been received. Thank you for your business.',
+                    body: 'Dear Customer,\n\nYour payment of $99.99 for Invoice #12345 has been received. Thank you for your business.\n\nBest regards,\nBilling Team',
+                    isRead: true
+                }
+            ];
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const modals = document.querySelectorAll('.gcp-modal');
+            modals.forEach(modal => {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html> 

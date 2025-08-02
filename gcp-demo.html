@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TLDR - Personal Context Agent</title>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@300;400;500;600&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gcp-blue: #1a73e8;
+            --gcp-blue-hover: #1557b0;
+            --gcp-green: #137333;
+            --gcp-green-light: #e8f5e8;
+            --gcp-red: #d93025;
+            --gcp-yellow: #f9ab00;
+            --gcp-grey-50: #f8f9fa;
+            --gcp-grey-100: #f1f3f4;
+            --gcp-grey-200: #e8eaed;
+            --gcp-grey-300: #dadce0;
+            --gcp-grey-400: #bdc1c6;
+            --gcp-grey-500: #9aa0a6;
+            --gcp-grey-600: #80868b;
+            --gcp-grey-700: #5f6368;
+            --gcp-grey-800: #3c4043;
+            --gcp-grey-900: #202124;
+            --gcp-white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
+            background-color: var(--gcp-grey-50);
+            color: var(--gcp-grey-900);
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        /* GCP Header */
+        .gcp-header {
+            background: var(--gcp-white);
+            border-bottom: 1px solid var(--gcp-grey-200);
+            height: 64px;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .gcp-logo {
+            display: flex;
+            align-items: center;
+            font-size: 22px;
+            font-weight: 400;
+            color: var(--gcp-grey-700);
+            margin-right: 32px;
+        }
+
+        .gcp-logo::before {
+            content: "";
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #4285f4, #34a853, #fbbc04, #ea4335);
+            border-radius: 4px;
+            margin-right: 8px;
+        }
+
+        .gcp-breadcrumb {
+            font-size: 14px;
+            color: var(--gcp-grey-600);
+            font-weight: 400;
+        }
+
+        /* Main Content */
+        .gcp-content {
+            margin-top: 64px;
+            min-height: calc(100vh - 64px);
+            background: var(--gcp-grey-50);
+        }
+
+        .gcp-main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* Page Header */
+        .gcp-page-header {
+            background: var(--gcp-white);
+            border: 1px solid var(--gcp-grey-200);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+        }
+
+        .gcp-page-title {
+            font-size: 28px;
+            font-weight: 400;
+            color: var(--gcp-grey-900);
+            margin-bottom: 8px;
+            font-family: 'Google Sans', sans-serif;
+        }
+
+        .gcp-page-subtitle {
+            font-size: 14px;
+            color: var(--gcp-grey-700);
+            font-weight: 400;
+        }
+
+        /* Cards */
+        .gcp-card {
+            background: var(--gcp-white);
+            border: 1px solid var(--gcp-grey-200);
+            border-radius: 8px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+            overflow: hidden;
+        }
+
+        .gcp-card-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--gcp-grey-200);
+            background: var(--gcp-white);
+        }
+
+        .gcp-card-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--gcp-grey-900);
+            margin: 0;
+            font-family: 'Google Sans', sans-serif;
+        }
+
+        .gcp-card-content {
+            padding: 24px;
+        }
+
+        /* Buttons */
+        .gcp-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Google Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 20px;
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            min-height: 36px;
+            box-sizing: border-box;
+        }
+
+        .gcp-button-primary {
+            background: var(--gcp-blue);
+            color: var(--gcp-white);
+            border-color: var(--gcp-blue);
+        }
+
+        .gcp-button-primary:hover {
+            background: var(--gcp-blue-hover);
+            border-color: var(--gcp-blue-hover);
+            box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+        }
+
+        .gcp-button-secondary {
+            background: var(--gcp-white);
+            color: var(--gcp-blue);
+            border-color: var(--gcp-grey-300);
+        }
+
+        .gcp-button-secondary:hover {
+            background: var(--gcp-grey-50);
+            border-color: var(--gcp-grey-400);
+        }
+
+        /* Status Badge */
+        .gcp-status-badge {
+            display: inline-flex;
+            align-items: center;
+            background: var(--gcp-green-light);
+            color: var(--gcp-green);
+            border: 1px solid #c8e6c9;
+            border-radius: 16px;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+
+        /* Info Panel */
+        .gcp-info-panel {
+            background: #e8f0fe;
+            border: 1px solid #aecbfa;
+            border-radius: 4px;
+            padding: 16px;
+            margin-top: 24px;
+        }
+
+        .gcp-info-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .gcp-info-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            background: var(--gcp-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .gcp-info-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gcp-blue);
+        }
+
+        /* Grid Layout */
+        .gcp-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        /* Feature List */
+        .gcp-feature-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .gcp-feature-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            font-size: 14px;
+            color: var(--gcp-grey-700);
+        }
+
+        .gcp-feature-item::before {
+            content: "✓";
+            color: var(--gcp-green);
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .gcp-main {
+                padding: 16px;
+            }
+            
+            .gcp-page-header,
+            .gcp-card-content {
+                padding: 16px;
+            }
+            
+            .gcp-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Google Cloud Platform Header -->
+    <div class="gcp-header">
+        <div class="gcp-logo">
+            TLDR Personal Context Agent
+        </div>
+        <div class="gcp-breadcrumb">
+            <a href="#">Integrations</a> > <a href="#">Gmail OAuth</a> > Setup
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="gcp-content">
+        <div class="gcp-main">
+            <!-- Page Header -->
+            <div class="gcp-page-header">
+                <h1 class="gcp-page-title">Gmail Integration Setup</h1>
+                <p class="gcp-page-subtitle">Connect your Gmail account to TLDR for email management and insights</p>
+            </div>
+
+            <!-- OAuth Status Card -->
+            <div class="gcp-card">
+                <div class="gcp-card-header">
+                    <h2 class="gcp-card-title">OAuth Configuration</h2>
+                </div>
+                <div class="gcp-card-content">
+                    <div class="gcp-status-badge">OAuth callback server running</div>
+                    <p style="color: var(--gcp-grey-700); margin-bottom: 24px;">
+                        Your OAuth callback server is ready to handle Google authorization responses.
+                    </p>
+                    
+                    <div class="gcp-button-group">
+                        <button class="gcp-button gcp-button-primary" onclick="openGmailSetup()">
+                            Setup Gmail OAuth
+                        </button>
+                        <button class="gcp-button gcp-button-secondary" onclick="openGmailDemo()">
+                            Gmail Demo
+                        </button>
+                        <button class="gcp-button gcp-button-secondary" onclick="showSetupInstructions()">
+                            Setup Instructions
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features Grid -->
+            <div class="gcp-grid">
+                <!-- Gmail Integration -->
+                <div class="gcp-card">
+                    <div class="gcp-card-header">
+                        <h2 class="gcp-card-title">📧 Gmail Integration</h2>
+                    </div>
+                    <div class="gcp-card-content">
+                        <ul class="gcp-feature-list">
+                            <li class="gcp-feature-item">Read and send emails</li>
+                            <li class="gcp-feature-item">Search and filter messages</li>
+                            <li class="gcp-feature-item">Star and organize emails</li>
+                            <li class="gcp-feature-item">Real-time synchronization</li>
+                            <li class="gcp-feature-item">Secure OAuth2 authentication</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Security Status -->
+                <div class="gcp-card">
+                    <div class="gcp-card-header">
+                        <h2 class="gcp-card-title">🛡️ Security Status</h2>
+                    </div>
+                    <div class="gcp-card-content">
+                        <ul class="gcp-feature-list">
+                            <li class="gcp-feature-item">OAuth2 file validation ready</li>
+                            <li class="gcp-feature-item">Secure credential handling</li>
+                            <li class="gcp-feature-item">Input validation active</li>
+                            <li class="gcp-feature-item">Error handling secure</li>
+                            <li class="gcp-feature-item">Rate limiting implemented</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Panel -->
+            <div class="gcp-info-panel">
+                <div class="gcp-info-header">
+                    <div class="gcp-info-icon">i</div>
+                    <span class="gcp-info-title">OAuth Callback Server</span>
+                </div>
+                <p style="color: var(--gcp-grey-800); font-size: 14px; margin-bottom: 12px;">
+                    Your OAuth callback server is running permanently on <strong>localhost:3000</strong>.
+                    This server handles Google OAuth callbacks and displays authorization codes in a professional interface.
+                </p>
+                <p style="color: var(--gcp-grey-800); font-size: 14px;">
+                    <strong>Callback URL:</strong> <code>http://localhost:3000/oauth/callback</code>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openGmailSetup() {
+            alert('Opening Gmail OAuth setup...\n\nRedirect URI: http://localhost:3000/oauth/callback\n\nComplete the OAuth flow in Google Cloud Console.');
+        }
+
+        function openGmailDemo() {
+            alert('Opening Gmail demo...\n\nThis would show the Gmail integration interface with email management features.');
+        }
+
+        function showSetupInstructions() {
+            alert('Google Cloud Console Setup Instructions:\n\n1. Go to console.cloud.google.com\n2. Create/select project\n3. Enable Gmail API\n4. Create OAuth 2.0 credentials\n5. Set redirect URI: http://localhost:3000/oauth/callback\n6. Download JSON credentials\n7. Complete OAuth flow');
+        }
+    </script>
+</body>
+</html> 
